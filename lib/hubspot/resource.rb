@@ -25,6 +25,11 @@ module Hubspot
         request = {
           properties: Hubspot::Utils.hash_to_properties(properties.stringify_keys, key_name: property_name_field)
         }
+        Rails.logger.info "*" * 80
+        Rails.logger.info "Request #{request.inspect}"
+        Rails.logger.info "Properties: #{properties.inspect}"
+        Rails.logger.info "create_path: #{create_path}"
+        Rails.logger.info "*" * 80
         response = Hubspot::Connection.post_json(create_path, params: {}, body: request)
         from_result(response)
       end

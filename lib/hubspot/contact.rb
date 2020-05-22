@@ -61,7 +61,7 @@ class Hubspot::Contact < Hubspot::Resource
 
           {
             keyName => keyValue,
-            "properties" => changes.map { |k, v| { "name" => k, "value" => v } }
+            "properties" => changes.map { |k, v| { "property" => k, "value" => v } }
           }
         end
       end

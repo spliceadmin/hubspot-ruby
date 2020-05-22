@@ -3,6 +3,7 @@ class Hubspot::Contact < Hubspot::Resource
   self.update_method = "post"
 
   ALL_PATH                = '/contacts/v1/lists/all/contacts/all'
+  BATCH_UPDATE_PATH       = '/contacts/v1/contact/batch/'
   CREATE_PATH             = '/contacts/v1/contact'
   CREATE_OR_UPDATE_PATH   = '/contacts/v1/contact/createOrUpdate/email/:email'
   DELETE_PATH             = '/contacts/v1/contact/vid/:id'
@@ -19,7 +20,7 @@ class Hubspot::Contact < Hubspot::Resource
         response = Hubspot::Connection.get_json(
           ALL_PATH,
           options.merge("count" => limit, "vidOffset" => offset)
-          )
+        )
 
         contacts = response["contacts"].map { |result| from_result(result) }
         [contacts, response["vid-offset"], response["has-more"]]
@@ -49,12 +50,41 @@ class Hubspot::Contact < Hubspot::Resource
       from_result(response)
     end
 
+    def batch_update(contacts, opts = {})
+      request = contacts.map do |contact|
+        # Use the specified options or update with the changes
+        changes = opts.empty? ? contact.changes : opts
+
+        unless changes.empty?
+          keyName = contact.id.present? ? "vid" : "email";
+          keyValue = contact.id.present? ? contact.id : contact.email;
+
+          {
+            keyName => keyValue,
+            "properties" => changes.map { |k, v| { "name" => k, "value" => v } }
+          }
+        end
+      end
+
+      # Remove any objects without changes and return if there is nothing to update
+      request.compact!
+      return true if request.empty?
+
+      Hubspot::Connection.post_json(
+        BATCH_UPDATE_PATH,
+        params: {},
+        body: request
+      )
+
+      true
+    end
+
     def search(query, opts = {})
       Hubspot::PagedCollection.new(opts) do |options, offset, limit|
         response = Hubspot::Connection.get_json(
           SEARCH_PATH,
           options.merge(q: query, offset: offset, count: limit)
-          )
+        )
 
         contacts = response["contacts"].map { |result| from_result(result) }
         [contacts, response["offset"], response["has-more"]]
@@ -66,7 +96,7 @@ class Hubspot::Contact < Hubspot::Resource
         MERGE_PATH,
         params: { id: primary.to_i, no_parse: true },
         body: { "vidToMerge" => secondary.to_i }
-        )
+      )
 
       true
     end

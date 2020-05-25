@@ -59,10 +59,17 @@ class Hubspot::Contact < Hubspot::Resource
           keyName = contact.id.present? ? "vid" : "email";
           keyValue = contact.id.present? ? contact.id : contact.email;
 
-          {
-            keyName => keyValue,
-            "properties" => changes.map { |k, v| { "property" => k, "value" => v } }
-          }
+          begin
+            {
+              keyName => keyValue,
+              "properties" => changes.map { |k, v| { "property" => k, "value" => v } }
+            }
+          rescue
+            Rails.logger.error "*" * 80
+            Rails.logger.error "Error saving #{contact}"
+            Rails.logger.error "*" * 80
+            nil
+          end
         end
       end
 

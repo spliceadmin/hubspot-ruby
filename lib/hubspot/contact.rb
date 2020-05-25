@@ -56,10 +56,9 @@ class Hubspot::Contact < Hubspot::Resource
         changes = opts.empty? ? contact.changes : opts
 
         unless changes.empty?
-          keyName = contact.id.present? ? "vid" : "email";
-          keyValue = contact.id.present? ? contact.id : contact.email;
-
           begin
+            keyName = contact.id.present? ? "vid" : "email";
+            keyValue = contact.id.present? ? contact.id : contact.email;
             {
               keyName => keyValue,
               "properties" => changes.map { |k, v| { "property" => k, "value" => v } }
